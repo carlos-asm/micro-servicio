@@ -1,0 +1,41 @@
+
+networks:
+  laravel_network:
+    driver: bridge
+
+
+services:
+ 
+  # Servicio de Apigateway
+  apigateway-service:
+    build: 
+      context: ./apigateway-service
+      dockerfile: Dockerfile
+    container_name: apigateway-service
+    restart: unless-stopped
+    volumes:
+      - ./apigateway-service:/var/www/html
+    environment:
+      - MONGO_URI=mongodb://root:root@db_server4:27017
+      - KITCHEN_SERVICE_URL=http://kitchen-service
+      - STORE_SERVICE_URL=http://store-service
+      - AUTH_SERVICE_URL=http://auth-service
+      - BROADCAST_DRIVER=log
+      - CACHE_DRIVER=file
+      - FILESYSTEM_DISK=local
+      - QUEUE_CONNECTION=database
+      - SESSION_DRIVER=file
+      - SESSION_LIFETIME=120
+      
+      - APP_ENV=local
+      - APP_KEY=base64:uc3Lq3Q7tqUJ5aSKr6/uaTOku98lFKzXmajbAAQ8eV4=
+      - APP_DEBUG=false
+      - JWT_SECRET=DGv3VXMwlYq1PZDKuxlBFhpN2akLg5x7JjSOObQSB1bikcRUgFoQgpzRboenxGrT
+    ports:
+      - "8881:80"
+    depends_on:
+      - auth-service
+      - kitchen-service
+      - store-service
+    networks:
+      - laravel_network
