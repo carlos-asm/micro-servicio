@@ -3,9 +3,53 @@ networks:
   laravel_network:
     driver: bridge
 
+volumes:
+  db_server1_data:
+    driver: local
 
 services:
- 
+  db_server1:
+    image: postgres:13
+    container_name: db_server1
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: auth_db
+    ports:
+      - "5434:5432"
+    volumes:
+      - db_server1_data:/var/lib/postgresql/data
+    networks:
+      - laravel_network
+
+  # Servicio de Auth
+  auth-service:
+    build: 
+      context: ./auth-service
+      dockerfile: Dockerfile
+    container_name: auth-service
+    restart: unless-stopped
+    volumes:
+      - ./auth-service:/var/www/html
+    environment:
+      - APP_ENV=local
+      - APP_KEY=base64:uc3Lq3Q7tqUJ5aSKr6/uaTOku98lFKzXmajbAAQ8eV4=
+      - APP_DEBUG=false
+      - DB_CONNECTION=pgsql
+      - DB_HOST=db_server1
+      - DB_PORT=5432
+      - DB_DATABASE=auth_db
+      - DB_USERNAME=root
+      - DB_PASSWORD=root
+      - JWT_SECRET=DGv3VXMwlYq1PZDKuxlBFhpN2akLg5x7JjSOObQSB1bikcRUgFoQgpzRboenxGrT
+    ports:
+      - "8888:80"
+    depends_on:
+      - db_server1
+    networks:
+      - laravel_network
+
   # Servicio de Apigateway
   apigateway-service:
     build: 
@@ -35,7 +79,5 @@ services:
       - "8881:80"
     depends_on:
       - auth-service
-      - kitchen-service
-      - store-service
     networks:
       - laravel_network
